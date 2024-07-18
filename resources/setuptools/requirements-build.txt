@@ -1,0 +1,12 @@
+-r requirements.txt
+
+# Build
+build==1.1.1
+
+# Transitive
+importlib-metadata==6.7.0
+packaging==24.0
+pyproject_hooks==1.1.0
+tomli==2.0.1
+typing_extensions==4.7.1
+zipp==3.15.0

@@ -1,0 +1,19 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+rich = "*"
+typer = "*"
+py-proj = {file = ".", editable = true}
+
+[dev-packages]
+black = "*"
+build = "*"
+pytest = "*"
+twine = "*"
+wheel = "*"
+
+[requires]
+python_version = "3.12"
