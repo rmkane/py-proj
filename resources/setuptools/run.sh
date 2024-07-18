@@ -4,63 +4,8 @@
 # Setuptools project runner
 # ==============================================================================
 
-# Constants
-PYTHON=python3
-VENV_DIR=.venv
-
-# ==============================================================================
-# Utility functions
-# ==============================================================================
-
-# Extract a value from the pyproject.toml file
-toml_value() {
-  [ -f pyproject.toml ] && \
-    awk -F'= ' "/^$1/ {gsub(/\"/, \"\", \$2); print \$2}" pyproject.toml
-}
-
-# Extract a key for a given value pattern
-toml_key_for_value_pattern() {
-  [ -f pyproject.toml ] && \
-    awk -F'=' "/$1/ {gsub(/ /, \"\", \$1); print \$1}" pyproject.toml
-}
-
-# ==============================================================================
-# Configuration
-# ==============================================================================
-
-# Extract project information
-PROJECT_NAME=$(toml_value name)
-PROJECT_SCRIPT=$(toml_key_for_value_pattern '[a-zA-Z0-9_.]+:[a-zA-Z0-9_]+')
-
-# Determine the package name
-PACKAGE=$(echo "$PROJECT_NAME" | tr '-' '_')
-
-# ==============================================================================
-# Utility functions
-# ==============================================================================
-
-# Check if a module is installed
-module_exists() {
-    $PYTHON -m pip show "$1" > /dev/null 2>&1
-}
-
-# Remove directories recursively
-remove_dirs_recursive() {
-    for dir in "$@"; do find . -type d -name "$dir" -exec rm -rf {} + ; done
-}
-
-# Show usage message
-usage() {
-    echo "Usage: $0 {$(get_commands | awk '{print $1}' | tr '\n' '|' | sed 's/|$//')}"
-}
-
-# Get the list of available commands
-get_commands() {
-    grep -E "^# @name:|^# @desc:" "$0" | awk '
-        /^# @name:/ { name=$3 }
-        /^# @desc:/ { desc=substr($0, index($0,$3)); printf "  %-10s %s\n", name, desc }
-    '
-}
+# Load common functions
+source "$(dirname "${BASH_SOURCE[0]}")/../common/base-run.sh"
 
 # ==============================================================================
 # Helper functions
@@ -116,19 +61,24 @@ local_reinstall() {
 
 # Local install, if not installed
 local_install() {
-    module_exists "$PACKAGE" || local_reinstall
+    module_exists "$PROJECT_NAME" || local_reinstall
 }
 
 # Uninstall the package, if installed
 local_uninstall() {
-    module_exists "$PACKAGE" && \
-        $PYTHON -m pip uninstall -y "$PACKAGE" > /dev/null 2>&1 || \
-        echo "Package not installed."
+    uninstall_package "$PROJECT_NAME"
 }
 
 # ==============================================================================
 # Command functions
 # ==============================================================================
+
+# @command
+# @name: freeze
+# @desc: Freeze the dependencies
+command_freeze() {
+    activate_venv && freeze_packages
+}
 
 # @command
 # @name: install
@@ -190,12 +140,7 @@ command_exec() {
 # @name: help
 # @desc: Show this help message
 command_help() {
-    cat << EOF
-$(usage)
-
-Available commands:
-$(get_commands)
-EOF
+    show_help
 }
 
 # ==============================================================================
@@ -205,6 +150,7 @@ EOF
 # Parse the command line arguments
 parse_args() {
     case "$1" in
+        freeze)     command_freeze         ;;
         install)    command_install        ;;
         uninstall)  command_uninstall      ;;
         build)      command_build          ;;
