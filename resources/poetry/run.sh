@@ -36,43 +36,8 @@ PROJECT_SCRIPT=$(toml_key_for_value_pattern '[a-zA-Z0-9_.]+:[a-zA-Z0-9_]+')
 PACKAGE=$(echo "$PROJECT_NAME" | tr '-' '_')
 
 # ==============================================================================
-# Helper functions
+# Utility functions
 # ==============================================================================
-
-# Setup the virtual environment
-setup_venv() {
-    if [ ! -d "$VENV_DIR" ]; then
-        $PYTHON -m venv $VENV_DIR
-        $VENV_DIR/bin/pip install -U pip setuptools
-        $VENV_DIR/bin/pip install poetry
-    fi
-}
-
-# Activate the virtual environment
-activate_venv() {
-    setup_venv
-    if ! source $VENV_DIR/bin/activate; then
-        echo "Failed to activate virtual environment" >&2
-        exit 1
-    fi
-}
-
-# Local install
-local_reinstall() {
-    poetry install
-}
-
-# Local install, if not installed
-local_install() {
-    module_exists "$PACKAGE" || local_reinstall
-}
-
-# Uninstall the package, if installed
-local_uninstall() {
-    module_exists "$PACKAGE" && \
-        poetry uninstall -y "$PACKAGE" > /dev/null 2>&1 || \
-        echo "Package not installed."
-}
 
 # Check if a module is installed
 module_exists() {
@@ -98,6 +63,45 @@ get_commands() {
 }
 
 # ==============================================================================
+# Helper functions
+# ==============================================================================
+
+# Setup the virtual environment
+setup_venv() {
+    if [ ! -d "$VENV_DIR" ]; then
+        $PYTHON -m venv $VENV_DIR
+        $VENV_DIR/bin/pip install -U pip setuptools
+        $VENV_DIR/bin/pip install poetry
+    fi
+}
+
+# Activate the virtual environment
+activate_venv() {
+    setup_venv
+    if ! source "$VENV_DIR/bin/activate"; then
+        echo "Failed to activate virtual environment" >&2
+        exit 1
+    fi
+}
+
+# Local install
+local_reinstall() {
+    poetry install
+}
+
+# Local install, if not installed
+local_install() {
+    module_exists "$PACKAGE" || local_reinstall
+}
+
+# Uninstall the package, if installed
+local_uninstall() {
+    module_exists "$PACKAGE" && \
+        poetry uninstall -y "$PACKAGE" > /dev/null 2>&1 || \
+        echo "Package not installed."
+}
+
+# ==============================================================================
 # Command functions
 # ==============================================================================
 
@@ -113,6 +117,13 @@ command_install() {
 # @desc: Uninstall the package
 command_uninstall() {
     activate_venv && local_uninstall
+}
+
+# @command
+# @name: build
+# @desc: Build the package
+command_build() {
+    activate_venv && poetry build
 }
 
 # @command

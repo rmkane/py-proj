@@ -36,6 +36,33 @@ PROJECT_SCRIPT=$(toml_key_for_value_pattern '[a-zA-Z0-9_.]+:[a-zA-Z0-9_]+')
 PACKAGE=$(echo "$PROJECT_NAME" | tr '-' '_')
 
 # ==============================================================================
+# Utility functions
+# ==============================================================================
+
+# Check if a module is installed
+module_exists() {
+    $PYTHON -m pip show "$1" > /dev/null 2>&1
+}
+
+# Remove directories recursively
+remove_dirs_recursive() {
+    for dir in "$@"; do find . -type d -name "$dir" -exec rm -rf {} + ; done
+}
+
+# Show usage message
+usage() {
+    echo "Usage: $0 {$(get_commands | awk '{print $1}' | tr '\n' '|' | sed 's/|$//')}"
+}
+
+# Get the list of available commands
+get_commands() {
+    grep -E "^# @name:|^# @desc:" "$0" | awk '
+        /^# @name:/ { name=$3 }
+        /^# @desc:/ { desc=substr($0, index($0,$3)); printf "  %-10s %s\n", name, desc }
+    '
+}
+
+# ==============================================================================
 # Helper functions
 # ==============================================================================
 
@@ -97,29 +124,6 @@ local_uninstall() {
     module_exists "$PACKAGE" && \
         $PYTHON -m pip uninstall -y "$PACKAGE" > /dev/null 2>&1 || \
         echo "Package not installed."
-}
-
-# Check if a module is installed
-module_exists() {
-    $PYTHON -m pip show "$1" > /dev/null 2>&1
-}
-
-# Remove directories recursively
-remove_dirs_recursive() {
-    for dir in "$@"; do find . -type d -name "$dir" -exec rm -rf {} + ; done
-}
-
-# Show usage message
-usage() {
-    echo "Usage: $0 {$(get_commands | awk '{print $1}' | tr '\n' '|' | sed 's/|$//')}"
-}
-
-# Get the list of available commands
-get_commands() {
-    grep -E "^# @name:|^# @desc:" "$0" | awk '
-        /^# @name:/ { name=$3 }
-        /^# @desc:/ { desc=substr($0, index($0,$3)); printf "  %-10s %s\n", name, desc }
-    '
 }
 
 # ==============================================================================
